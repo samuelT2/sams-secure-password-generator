@@ -1,0 +1,27 @@
+name: sspg.ch / PROD deployment
+
+on:
+  workflow_dispatch:
+
+jobs:
+  web-deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get latest code
+      uses: actions/checkout@v4.2.2
+    
+    - name: Sync files (PROD)
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: sspg.ch
+        username: samuel@sspg.ch
+        password: ${{ secrets.FTP_USER }}
+        local-dir: ./
+        server-dir: 0701_Sspg.ch/
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          README.md
+          logo.jpg

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- https://github.com/samuelT2/sams-secure-password-generator -->
+
+<head>
+  <meta charset="UTF-8">
+  <title> Sam's Secure Password Generator (SSPG)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description"
+    content="Secure and easy to use password generator. Generate random passwords with numbers, uppercase letters, lowercase letters, and symbols. Responsive, PWA ready and cookieless.">
+  <meta name="keywords"
+    content="secure,password generator,pwa,random password,generate password,random,secure password,cookieless">
+  <meta name="author" content="Samuel">
+  <link rel="stylesheet" type="text/css" href="css/style.css?v=1.0">
+  <link rel="manifest" href="assets/pwa/manifest.json">
+  <link rel="apple-touch-icon" sizes="57x57" href="assets/favicon/apple-icon-57x57.png">
+  <link rel="apple-touch-icon" sizes="60x60" href="assets/favicon/apple-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="assets/favicon/apple-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="assets/favicon/apple-icon-76x76.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="assets/favicon/apple-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="assets/favicon/apple-icon-120x120.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="assets/favicon/apple-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="assets/favicon/apple-icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-icon-180x180.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon/android-icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="assets/favicon/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="msapplication-TileImage" content="assets/favicon/ms-icon-144x144.png">
+  <meta name="theme-color" content="#ffffff">
+</head>
+
+<body>
+  <div class="app">
+    <h1>Sam's Secure Password Generator (SSPG)</h1>
+    <p class="intro">Everything happens on your device - nothing is logged or saved. Responsive, PWA ready
+      and cookieless.</p>
+    <div class="form">
+      <div class="checkbox-row"><input type="checkbox" id="numbers" checked><label for="numbers">Include numbers</label>
+      </div>
+      <div class="checkbox-row"><input type="checkbox" id="uppercases" checked><label for="uppercases">Include uppercase
+          letters</label>
+      </div>
+      <div class="checkbox-row"><input type="checkbox" id="lowercases" checked><label for="lowercases">Include lowercase
+          letters</label>
+      </div>
+      <div class="checkbox-row"><input type="checkbox" id="symbols" checked><label for="symbols">Include symbols</label>
+      </div>
+      <div class="checkbox-row"><input type="checkbox" id="startsWithLetter" checked><label
+          for="startsWithLetter">Always start with a
+          letter</label></div>
+      <label for="length">Password length (min 8, max 128):</label>
+      <input class="generate-button" type="number" id="length" min="8" max="128" value="25">
+      <button id="generateBtn">Generate passwords</button>
+    </div>
+    <div class="result">
+      <div class="result-row">
+        <label for="password-1" class="visually-hidden">Generated password 1</label>
+        <input type="text" id="password-1" readonly>
+        <button data-copy-target="password-1" aria-label="Copy password to clipboard">Copy</button>
+      </div>
+      <div class="result-row">
+        <label for="password-2" class="visually-hidden">Generated password 2</label>
+        <input type="text" id="password-2" readonly>
+        <button data-copy-target="password-2" aria-label="Copy password to clipboard">Copy</button>
+      </div>
+      <div class="result-row">
+        <label for="password-3" class="visually-hidden">Generated password 3</label>
+        <input type="text" id="password-3" readonly>
+        <button data-copy-target="password-3" aria-label="Copy password to clipboard">Copy</button>
+      </div>
+      <div id="copyStatus" aria-live="polite" class="visually-hidden"></div>
+    </div>
+    <footer>
+      <p>&copy; <span id="year"></span> Sam's Secure Password Generator, v1.0 20250630
+      </p>
+      <p>Found a bug? Please <a href="https://github.com/samuelT2/secure-password-generator/issues/new/choose"
+          target="_blank" rel="noopener noreferrer">report
+          here</a>.</p>
+      <p><a href="mailto:samuel@sspg.ch">Contact</a> | Coded and hosted in Switzerland | <a
+          href="https://github.com/samuelT2/sams-secure-password-generator" target="_blank"
+          rel="noopener noreferrer">Github</a></p>
+    </footer>
+  </div>
+  <script src="js/sspg.js?v=1.0"></script>
+  <script src="register-sw.js?v=1.0"></script>
+</body>
+
+</html>
