@@ -63,8 +63,6 @@ function generatePasswords() {
     return;
   }
 
-  console.log("Character pool:", charPool);
-
   const letters = (upps + lows);
   const useLetters = opts.startsWithLetter && (letters.length > 0);
   const passwords = [];
