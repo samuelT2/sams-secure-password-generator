@@ -1,7 +1,6 @@
 const nums = '1234567890';
 const upps = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const lows = 'abcdefghijklmnopqrstuvwxyz';
-const syms = '!?#$€:;%&@()[]{}§.,*+-_=\\"\'^~<>|';
 
 function cryptoSafeRandom(length) {
   const crypto = window.crypto || window.msCrypto;
@@ -42,7 +41,10 @@ function generatePasswords() {
   if (opts.numbers) charPool += nums;
   if (opts.uppercases) charPool += upps;
   if (opts.lowercases) charPool += lows;
-  if (opts.symbols) charPool += syms;
+  if (opts.symbols) {
+    const customSyms = document.getElementById('customSymbols').value;
+    charPool += customSyms;
+  }
 
   if (charPool.length === 0) {
     alert("Please select at least one character type.");
@@ -60,7 +62,12 @@ function generatePasswords() {
     if (opts.numbers) mandatory.push(randomFrom(nums));
     if (opts.uppercases) mandatory.push(randomFrom(upps));
     if (opts.lowercases) mandatory.push(randomFrom(lows));
-    if (opts.symbols) mandatory.push(randomFrom(syms));
+    if (opts.symbols) {
+      const customSyms = document.getElementById('customSymbols').value;
+      if (customSyms.length > 0) {
+        mandatory.push(randomFrom(customSyms));
+      }
+    }
 
     let firstChar = '';
     opts.length < 8 && (opts.length = 8);

@@ -97,6 +97,16 @@ footer a {
   width: 100%;
 }
 
+input#customSymbols {
+  font-size: 1rem;
+  padding: 0.4rem;
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  flex: 1;
+}
+
 @media (max-width: 400px) {
   .result-row {
     gap: 0.25rem;
@@ -157,6 +167,12 @@ button:hover {
 
   footer {
     color: #aaa;
+  }
+
+  input#customSymbols {
+    background: #2e2e2e;
+    color: #f0f0f0;
+    border: 1px solid #555;
   }
 }
 
