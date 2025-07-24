@@ -42,14 +42,28 @@ function generatePasswords() {
   if (opts.uppercases) charPool += upps;
   if (opts.lowercases) charPool += lows;
   if (opts.symbols) {
-    const customSyms = document.getElementById('customSymbols').value;
-    charPool += customSyms;
+    const inputField = document.getElementById('customSymbols');
+    let customSyms = inputField.value;
+
+    if (customSyms.trim().length === 0) {
+      alert("Please enter at least one symbol when 'Include symbols' is checked.");
+      return;
+    }
+
+    customSyms = sanitizeSymbols(customSyms);
+    inputField.value = customSyms;
+
+    if (customSyms.length > 0) {
+      charPool += customSyms;
+    }
   }
 
   if (charPool.length === 0) {
     alert("Please select at least one character type.");
     return;
   }
+
+  console.log("Character pool:", charPool);
 
   const letters = (upps + lows);
   const useLetters = opts.startsWithLetter && (letters.length > 0);
@@ -128,6 +142,21 @@ function showCopyMessage(button) {
   document.getElementById('copyStatus').textContent = 'Password copied to clipboard.';
 
   setTimeout(() => message.remove(), 7500);
+}
+
+function sanitizeSymbols(input) {
+  const maxLen = 100;
+  const allBlocked = new Set((nums + upps + lows).split(''));
+  const resultSet = new Set();
+
+  for (const char of input) {
+    if (!allBlocked.has(char)) {
+      resultSet.add(char);
+      if (resultSet.size >= maxLen) break;
+    }
+  }
+
+  return [...resultSet].join('');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
