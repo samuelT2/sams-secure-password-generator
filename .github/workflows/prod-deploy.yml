@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Get latest code
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v4.3.0
     
     - name: Sync files (PROD)
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
