@@ -12,7 +12,7 @@ jobs:
       uses: actions/checkout@v5.0.0
     
     - name: Sync files (PROD)
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.6
       with:
         server: sspg.ch
         username: samuel@sspg.ch
