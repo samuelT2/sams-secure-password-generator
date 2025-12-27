@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sspg-v1.2.1';
+const CACHE_NAME = 'sspg-v1.2.2';
 const CACHE_FILES = [
   '/index.html',
   '/css/style.css',
