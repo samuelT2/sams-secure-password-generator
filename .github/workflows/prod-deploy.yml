@@ -10,7 +10,31 @@ jobs:
     steps:
     - name: Get latest code
       uses: actions/checkout@v6.0.2
-    
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Minify HTML, CSS and JS
+      # Minifies in place inside the runner only; the committed source files
+      # stay readable. Tool versions are pinned for reproducible builds.
+      run: |
+        set -euo pipefail
+        minify_js() {
+          npx -y terser@5.48.0 "$1" -c -m -o "$1.min"
+          mv "$1.min" "$1"
+        }
+        minify_js js/sspg.js
+        minify_js register-sw.js
+        minify_js sw.js
+        npx -y clean-css-cli@5.6.3 css/style.css -o css/style.css.min
+        mv css/style.css.min css/style.css
+        npx -y html-minifier-terser@7.2.0 \
+          --collapse-whitespace --remove-comments \
+          index.html -o index.html.min
+        mv index.html.min index.html
+
     - name: Sync files (PROD)
       uses: SamKirkland/FTP-Deploy-Action@v4.3.6
       with:

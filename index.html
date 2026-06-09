@@ -5,14 +5,18 @@
 
 <head>
   <meta charset="UTF-8">
-  <title> Sam's Secure Password Generator (SSPG)</title>
+  <title>Sam's Secure Password Generator (SSPG)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; manifest-src 'self'; connect-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
   <meta name="description"
     content="Secure and easy to use password generator. Generate random passwords with numbers, uppercase letters, lowercase letters, and symbols. Responsive, PWA ready and cookieless.">
   <meta name="keywords"
     content="secure,password generator,pwa,random password,generate password,random,secure password,cookieless">
   <meta name="author" content="Samuel">
-  <link rel="stylesheet" type="text/css" href="css/style.css?v=1.2.3">
+  <link rel="stylesheet" href="css/style.css?v=1.3.0">
   <link rel="manifest" href="assets/pwa/manifest.json">
   <link rel="apple-touch-icon" sizes="57x57" href="assets/favicon/apple-icon-57x57.png">
   <link rel="apple-touch-icon" sizes="60x60" href="assets/favicon/apple-icon-60x60.png">
@@ -29,66 +33,93 @@
   <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
   <meta name="msapplication-TileColor" content="#ffffff">
   <meta name="msapplication-TileImage" content="assets/favicon/ms-icon-144x144.png">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#f1f5f9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
 </head>
 
 <body>
-  <div class="app">
-    <h1>Sam's Secure Password Generator (SSPG)</h1>
-    <p class="intro">Everything happens on your device - nothing is logged or saved. Responsive, PWA ready
-      and cookieless.</p>
-    <div class="form">
-      <div class="checkbox-row"><input type="checkbox" id="numbers" checked><label for="numbers">Include numbers</label>
+  <main class="app">
+    <header class="app-header">
+      <h1>Sam's Secure Password Generator (SSPG)</h1>
+      <p class="intro">Everything happens on your device &ndash; nothing is logged, stored or sent anywhere.
+        Responsive, PWA ready and cookieless.</p>
+    </header>
+
+    <form class="card form" id="generator" novalidate>
+      <fieldset class="options">
+        <legend>Include in password</legend>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="numbers" checked>
+          <label for="numbers">Include numbers</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="uppercases" checked>
+          <label for="uppercases">Include uppercase letters</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="lowercases" checked>
+          <label for="lowercases">Include lowercase letters</label>
+        </div>
+        <div class="checkbox-row checkbox-row--symbols">
+          <input type="checkbox" id="symbols" checked>
+          <label for="symbols">Include symbols:</label>
+          <input type="text" id="customSymbols" class="custom-symbols" placeholder="!?#$%..."
+            aria-label="Custom symbols to include" value="!?#$:;%&amp;@()[]{}&lt;&gt;.,*+-_=|/">
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="startsWithLetter" checked>
+          <label for="startsWithLetter">Always start with a letter</label>
+        </div>
+      </fieldset>
+
+      <div class="field">
+        <label for="length">Password length (min 8, max 128):</label>
+        <input type="number" id="length" min="8" max="128" step="1" inputmode="numeric" value="25">
       </div>
-      <div class="checkbox-row"><input type="checkbox" id="uppercases" checked><label for="uppercases">Include uppercase
-          letters</label>
-      </div>
-      <div class="checkbox-row"><input type="checkbox" id="lowercases" checked><label for="lowercases">Include lowercase
-          letters</label>
-      </div>
-      <div class="checkbox-row"><input type="checkbox" id="symbols" checked><label for="symbols">Include
-          symbols:</label>
-        <input type="text" id="customSymbols" class="custom-symbols" placeholder="!?#$%..."
-          value="!?#$:;%&amp;@()[]{}&lt;&gt;.,*+-_=|/">
-      </div>
-      <div class="checkbox-row"><input type="checkbox" id="startsWithLetter" checked><label
-          for="startsWithLetter">Always start with a
-          letter</label></div>
-      <label for="length">Password length (min 8, max 128):</label>
-      <input class="generate-button" type="number" id="length" min="8" max="128" value="25">
-      <button id="generateBtn">Generate passwords</button>
-    </div>
-    <div class="result">
+
+      <p id="formError" class="form-error" role="alert" hidden></p>
+
+      <button type="submit" id="generateBtn" class="btn btn--primary">Generate passwords</button>
+    </form>
+
+    <section class="card result" aria-label="Generated passwords">
       <div class="result-row">
         <label for="password-1" class="visually-hidden">Generated password 1</label>
-        <input type="text" id="password-1" readonly>
-        <button data-copy-target="password-1" aria-label="Copy password to clipboard">Copy</button>
+        <input type="text" id="password-1" readonly spellcheck="false" autocomplete="off">
+        <button type="button" class="btn btn--copy" data-copy-target="password-1"
+          aria-label="Copy password 1 to clipboard">Copy</button>
       </div>
       <div class="result-row">
         <label for="password-2" class="visually-hidden">Generated password 2</label>
-        <input type="text" id="password-2" readonly>
-        <button data-copy-target="password-2" aria-label="Copy password to clipboard">Copy</button>
+        <input type="text" id="password-2" readonly spellcheck="false" autocomplete="off">
+        <button type="button" class="btn btn--copy" data-copy-target="password-2"
+          aria-label="Copy password 2 to clipboard">Copy</button>
       </div>
       <div class="result-row">
         <label for="password-3" class="visually-hidden">Generated password 3</label>
-        <input type="text" id="password-3" readonly>
-        <button data-copy-target="password-3" aria-label="Copy password to clipboard">Copy</button>
+        <input type="text" id="password-3" readonly spellcheck="false" autocomplete="off">
+        <button type="button" class="btn btn--copy" data-copy-target="password-3"
+          aria-label="Copy password 3 to clipboard">Copy</button>
       </div>
       <div id="copyStatus" aria-live="polite" class="visually-hidden"></div>
-    </div>
+    </section>
+
     <footer>
-      <p>&copy; <span id="year"></span> Sam's Secure Password Generator, v1.2.3 20260106
+      <p>&copy; <span id="year"></span> Sam's Secure Password Generator, v1.3.0 20260609</p>
+      <p>Found a bug? Please
+        <a href="https://github.com/samuelT2/sams-secure-password-generator/issues/new/choose" target="_blank"
+          rel="noopener noreferrer">report here</a>.
       </p>
-      <p>Found a bug? Please <a href="https://github.com/samuelT2/secure-password-generator/issues/new/choose"
-          target="_blank" rel="noopener noreferrer">report
-          here</a>.</p>
-      <p><a href="mailto:samuel@sspg.ch">Contact</a> | Coded and hosted in Switzerland | <a
-          href="https://github.com/samuelT2/sams-secure-password-generator" target="_blank"
-          rel="noopener noreferrer">Github</a></p>
+      <p><a href="mailto:samuel@sspg.ch">Contact</a> | Coded and hosted in Switzerland |
+        <a href="https://github.com/samuelT2/sams-secure-password-generator" target="_blank"
+          rel="noopener noreferrer">Github</a>
+      </p>
     </footer>
-  </div>
-  <script src="js/sspg.js?v=1.2.3"></script>
-  <script src="register-sw.js?v=1.2.3"></script>
+  </main>
+
+  <script defer src="js/sspg.js?v=1.3.0"></script>
+  <script defer src="register-sw.js?v=1.3.0"></script>
 </body>
 
 </html>

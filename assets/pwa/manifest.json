@@ -61,12 +61,15 @@
       "src": "\/assets\/favicon\/app.png",
       "sizes": "635x1173",
       "type": "image\/png",
-      "form_factor": "wide"
+      "form_factor": "narrow",
+      "label": "Password generator (light theme)"
     },
     {
       "src": "\/assets\/favicon\/app_dark.png",
       "sizes": "635x1173",
-      "type": "image\/png"
+      "type": "image\/png",
+      "form_factor": "narrow",
+      "label": "Password generator (dark theme)"
     }
   ]
 }
