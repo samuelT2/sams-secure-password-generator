@@ -36,7 +36,7 @@ jobs:
         mv index.html.min index.html
 
     - name: Sync files (PROD)
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+      uses: SamKirkland/FTP-Deploy-Action@v4.4.0
       with:
         server: sspg.ch
         username: samuel@sspg.ch

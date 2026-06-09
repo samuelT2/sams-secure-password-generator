@@ -1,10 +1,10 @@
-const CACHE_NAME = 'sspg-v1.3.0';
+const CACHE_NAME = 'sspg-v1.3.1';
 const CACHE_FILES = [
   '/',
   '/index.html',
-  '/css/style.css?v=1.3.0',
-  '/js/sspg.js?v=1.3.0',
-  '/register-sw.js?v=1.3.0',
+  '/css/style.css?v=1.3.1',
+  '/js/sspg.js?v=1.3.1',
+  '/register-sw.js?v=1.3.1',
   '/assets/pwa/manifest.json',
   '/assets/favicon/android-icon-192x192.png',
   '/assets/favicon/android-icon-512x512.png',
