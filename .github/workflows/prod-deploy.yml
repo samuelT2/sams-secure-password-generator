@@ -39,6 +39,7 @@ jobs:
       uses: SamKirkland/FTP-Deploy-Action@v4.4.0
       with:
         server: sspg.ch
+        protocol: ftps
         username: samuel@sspg.ch
         password: ${{ secrets.FTP_USER }}
         local-dir: ./

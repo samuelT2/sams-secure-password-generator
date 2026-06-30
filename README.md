@@ -47,7 +47,7 @@ python -m http.server 8080
 
 ## Tech
 
-Vanilla HTML, CSS and JavaScript — no frameworks, no build step, no dependencies.
+Vanilla HTML, CSS and JavaScript - no frameworks, no build step, no dependencies.
 
 ## License
 
