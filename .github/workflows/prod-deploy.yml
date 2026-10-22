@@ -20,10 +20,12 @@ concurrency:
 #        Git Bash:   ssh-keygen -t ed25519 -N "" -C "github-deploy-sams-secure-password-generator" -f deploy_key
 #        PowerShell: ssh-keygen --% -t ed25519 -N "" -C github-deploy-sams-secure-password-generator -f deploy_key
 #      deploy_key.pub im cyon-Panel als SSH-Schlüssel hinterlegen.
-#   2. Settings → Secrets and variables → Actions → Variables (Repository): SSH_HOST, SSH_USER,
-#      SSH_PORT (leer = 22), SSH_KNOWN_HOSTS (Ausgabe von ssh-keyscan -p <port> <host>).
-#   3. Settings → Environments → "production": Secret SSH_PRIVATE_KEY (Inhalt von deploy_key, danach
-#      lokal löschen), Variable DEPLOY_PATH (per SSH in den Ordner 0701_Sspg.ch wechseln, pwd).
+#   2. Settings → Secrets and variables → Actions (Repository): Variables SSH_HOST, SSH_PORT
+#      (leer = 22), SSH_KNOWN_HOSTS (Ausgabe von ssh-keyscan -p <port> <host>); Secret SSH_USER.
+#   3. Settings → Environments → "production": Secrets SSH_PRIVATE_KEY (Inhalt von deploy_key, danach
+#      lokal löschen) und DEPLOY_PATH (per SSH in den Ordner 0701_Sspg.ch wechseln, pwd).
+#   Benutzer und Pfad sind Secrets, weil Variablen im Log stehen - und Logs sind bei einem
+#   öffentlichen Repository für alle lesbar.
 #   4. Workflow starten: ohne Variable DEPLOY_RSYNC_LIVE läuft nur ein Probelauf (--dry-run) und endet
 #      rot. Im Log die Zeilen "*deleting" prüfen (erwartet: Altlasten wie .ftp-deploy-sync-state.json),
 #      dann im Environment DEPLOY_RSYNC_LIVE = true setzen und erneut starten.
@@ -43,8 +45,8 @@ jobs:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         SSH_KNOWN_HOSTS: ${{ vars.SSH_KNOWN_HOSTS }}
         SSH_HOST: ${{ vars.SSH_HOST }}
-        SSH_USER: ${{ vars.SSH_USER }}
-        DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+        SSH_USER: ${{ secrets.SSH_USER }}
+        DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
       run: |
         missing=""
         for v in SSH_PRIVATE_KEY SSH_KNOWN_HOSTS SSH_HOST SSH_USER DEPLOY_PATH; do [ -n "${!v}" ] || missing="$missing $v"; done
@@ -54,7 +56,7 @@ jobs:
         fi
         # Alle Websites liegen im selben Hosting nebeneinander - rsync --delete darf nur in den
         # Ordner dieser Website (Schutz vor einem kopierten DEPLOY_PATH eines anderen Projekts).
-        case "${DEPLOY_PATH%/}" in */0701_Sspg.ch) ;; *) echo "::error::DEPLOY_PATH zeigt nicht auf den Ordner 0701_Sspg.ch: $DEPLOY_PATH"; exit 1 ;; esac
+        case "${DEPLOY_PATH%/}" in */0701_Sspg.ch) ;; *) echo "::error::DEPLOY_PATH zeigt nicht auf den Ordner 0701_Sspg.ch."; exit 1 ;; esac
 
     - name: Get latest code
       uses: actions/checkout@v7.0.1
@@ -90,7 +92,7 @@ jobs:
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         SSH_KNOWN_HOSTS: ${{ vars.SSH_KNOWN_HOSTS }}
-        DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+        DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
       run: |
         # '~/'* gequotet: ungequotet würde bash die Tilde im Muster zum Home des Runners expandieren.
         case "$DEPLOY_PATH" in /*|'~/'*) ;; *) echo "::error::DEPLOY_PATH muss absolut sein oder mit ~/ beginnen"; exit 1 ;; esac
@@ -103,9 +105,9 @@ jobs:
     - name: Sync files (PROD, rsync)
       env:
         SSH_HOST: ${{ vars.SSH_HOST }}
-        SSH_USER: ${{ vars.SSH_USER }}
+        SSH_USER: ${{ secrets.SSH_USER }}
         SSH_PORT: ${{ vars.SSH_PORT }}
-        DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+        DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         LIVE: ${{ vars.DEPLOY_RSYNC_LIVE }}
       run: |
         # Ohne pipefail zählte nur der Exit-Code von tee - ein fehlgeschlagener rsync bliebe grün.
