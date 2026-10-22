@@ -1,0 +1,23 @@
+# rsync-Regeln für den Deploy (.github/workflows/prod-deploy.yml).
+# Reihenfolge zählt: die erste passende Regel gilt. "- muster" = nicht übertragen UND auf dem Server
+# nie löschen (rsync löscht ausgeschlossene Pfade nur mit --delete-excluded, das der Deploy nie setzt).
+# Alles, was nur auf dem Server liegt, gehört deshalb hierher - fehlt hier ein Pfad, löscht der
+# nächste Deploy ihn.
+
+# ── Nur auf dem Server: Hoster-Dateien ───────────────────────────────────────
+- /.htpasswd
+# Zertifikats-Validierung (Let's Encrypt) und Statistik/Logs des Hosters
+- /.well-known/
+- /cgi-bin/
+- /stats/
+- /logs/
+- /error_log
+- /php_errorlog
+
+# ── Nie auf den Server: Entwicklung, Doku ────────────────────────────────────
+- .git
+- .git*
+- .github/
+- .claude/
+- node_modules/
+- /README.md

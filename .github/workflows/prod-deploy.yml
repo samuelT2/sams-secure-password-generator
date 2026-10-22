@@ -3,11 +3,59 @@ name: sspg.ch / PROD deployment
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: prod-deploy
+  # Ein laufender Deploy wird nicht mitten in der Übertragung abgebrochen.
+  cancel-in-progress: false
+
+# Deploy per SSH/rsync. Regeln in .github/deploy/rsync-filter: was dort mit "-" steht, wird weder
+# übertragen noch auf dem Server gelöscht; alles andere, was nicht im Repository liegt, löscht der
+# Deploy auf dem Server.
+#
+# Einrichtung (einmalig):
+#   1. Schlüsselpaar nur für den Deploy, ohne Passphrase, ausserhalb des Repositorys erzeugen:
+#        Git Bash:   ssh-keygen -t ed25519 -N "" -C "github-deploy-sams-secure-password-generator" -f deploy_key
+#        PowerShell: ssh-keygen --% -t ed25519 -N "" -C github-deploy-sams-secure-password-generator -f deploy_key
+#      deploy_key.pub im cyon-Panel als SSH-Schlüssel hinterlegen.
+#   2. Settings → Secrets and variables → Actions → Variables (Repository): SSH_HOST, SSH_USER,
+#      SSH_PORT (leer = 22), SSH_KNOWN_HOSTS (Ausgabe von ssh-keyscan -p <port> <host>).
+#   3. Settings → Environments → "production": Secret SSH_PRIVATE_KEY (Inhalt von deploy_key, danach
+#      lokal löschen), Variable DEPLOY_PATH (per SSH in den Ordner 0701_Sspg.ch wechseln, pwd).
+#   4. Workflow starten: ohne Variable DEPLOY_RSYNC_LIVE läuft nur ein Probelauf (--dry-run) und endet
+#      rot. Im Log die Zeilen "*deleting" prüfen (erwartet: Altlasten wie .ftp-deploy-sync-state.json),
+#      dann im Environment DEPLOY_RSYNC_LIVE = true setzen und erneut starten.
+#   Das alte Secret FTP_USER wird danach nicht mehr gebraucht.
 jobs:
   web-deploy:
     name: Deploy
+    # PROD nur von main - auch wenn der Workflow manuell auf einem anderen Branch gestartet wird.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://sspg.ch
     steps:
+    - name: PROD-Zugang (SSH) vorhanden?
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SSH_KNOWN_HOSTS: ${{ vars.SSH_KNOWN_HOSTS }}
+        SSH_HOST: ${{ vars.SSH_HOST }}
+        SSH_USER: ${{ vars.SSH_USER }}
+        DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+      run: |
+        missing=""
+        for v in SSH_PRIVATE_KEY SSH_KNOWN_HOSTS SSH_HOST SSH_USER DEPLOY_PATH; do [ -n "${!v}" ] || missing="$missing $v"; done
+        if [ -n "$missing" ]; then
+          echo "::error::Im Environment production fehlt:$missing (Einrichtung oben in dieser Datei)."
+          exit 1
+        fi
+        # Alle Websites liegen im selben Hosting nebeneinander - rsync --delete darf nur in den
+        # Ordner dieser Website (Schutz vor einem kopierten DEPLOY_PATH eines anderen Projekts).
+        case "${DEPLOY_PATH%/}" in */0701_Sspg.ch) ;; *) echo "::error::DEPLOY_PATH zeigt nicht auf den Ordner 0701_Sspg.ch: $DEPLOY_PATH"; exit 1 ;; esac
+
     - name: Get latest code
       uses: actions/checkout@v7.0.1
 
@@ -35,18 +83,52 @@ jobs:
           index.html -o index.html.min
         mv index.html.min index.html
 
-    - name: Sync files (PROD)
-      uses: SamKirkland/FTP-Deploy-Action@v4.4.0
-      with:
-        server: sspg.ch
-        protocol: ftps
-        username: samuel@sspg.ch
-        password: ${{ secrets.FTP_USER }}
-        local-dir: ./
-        server-dir: 0701_Sspg.ch/
-        exclude: |
-          **/.git*
-          **/.git*/**
-          **/node_modules/**
-          README.md
-          logo.jpg
+    # Deploy per SSH/rsync: eine Verbindung, nur Geändertes, komprimiert. Sicherheitsnetz: ohne
+    # Variable DEPLOY_RSYNC_LIVE=true im Environment nur ein Probelauf (--dry-run), der zeigt, was
+    # übertragen und gelöscht würde.
+    - name: SSH-Zugang einrichten
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SSH_KNOWN_HOSTS: ${{ vars.SSH_KNOWN_HOSTS }}
+        DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+      run: |
+        # '~/'* gequotet: ungequotet würde bash die Tilde im Muster zum Home des Runners expandieren.
+        case "$DEPLOY_PATH" in /*|'~/'*) ;; *) echo "::error::DEPLOY_PATH muss absolut sein oder mit ~/ beginnen"; exit 1 ;; esac
+        install -m 700 -d ~/.ssh
+        printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+        chmod 644 ~/.ssh/known_hosts
+
+    - name: Sync files (PROD, rsync)
+      env:
+        SSH_HOST: ${{ vars.SSH_HOST }}
+        SSH_USER: ${{ vars.SSH_USER }}
+        SSH_PORT: ${{ vars.SSH_PORT }}
+        DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+        LIVE: ${{ vars.DEPLOY_RSYNC_LIVE }}
+      run: |
+        # Ohne pipefail zählte nur der Exit-Code von tee - ein fehlgeschlagener rsync bliebe grün.
+        set -o pipefail
+        DRY="--dry-run"
+        if [ "$LIVE" = "true" ]; then DRY=""; else echo "::warning::PROBELAUF (DEPLOY_RSYNC_LIVE ist nicht true) - es wird nichts übertragen oder gelöscht."; fi
+        SSH="ssh -i $HOME/.ssh/deploy_key -p ${SSH_PORT:-22} -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts"
+        # -r rekursiv, -l Links, -z komprimiert, -c Vergleich nach Inhalt (der Checkout gibt allen
+        # Dateien ein neues Datum; ohne -t behalten unveränderte Dateien ihr Datum), -i Änderungen
+        # auflisten; Rechte fest (Shared Hosting); geänderte Dateien kommen erst am Ende an ihren Platz
+        # (--delay-updates), gelöscht wird zuletzt. Das Log liegt ausserhalb des Checkouts, sonst
+        # würde rsync es gleich mit hochladen.
+        rsync -rlzci --chmod=D755,F644 --delete --delete-delay --delay-updates $DRY \
+          --filter='merge .github/deploy/rsync-filter' \
+          -e "$SSH" ./ "$SSH_USER@$SSH_HOST:${DEPLOY_PATH%/}/" | tee "$RUNNER_TEMP/rsync.log"
+        echo "Gelöscht bzw. zu löschen: $(grep -c '^\*deleting' "$RUNNER_TEMP/rsync.log" || true) · übertragen bzw. zu übertragen: $(grep -cE '^[<>c]f' "$RUNNER_TEMP/rsync.log" || true)"
+        if [ -n "$DRY" ]; then
+          echo "Probelauf beendet. Liste oben prüfen (Zeilen mit *deleting), dann DEPLOY_RSYNC_LIVE=true setzen."
+          exit 1
+        fi
+
+    - name: Smoke-Test
+      timeout-minutes: 5
+      run: |
+        curl --fail --silent --show-error --retry 3 --retry-delay 5 --connect-timeout 10 --max-time 20 \
+          -o /dev/null https://sspg.ch/
