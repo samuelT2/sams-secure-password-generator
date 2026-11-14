@@ -80,10 +80,13 @@ jobs:
         minify_js sw.js
         npx -y clean-css-cli@5.6.3 css/style.css -o css/style.css.min
         mv css/style.css.min css/style.css
-        npx -y html-minifier-terser@7.2.0 \
-          --collapse-whitespace --remove-comments \
-          index.html -o index.html.min
-        mv index.html.min index.html
+        # Alle HTML-Seiten (inkl. deutscher Fassung de/ und 404-Seite) - entfernt auch die Kommentare.
+        for page in index.html de/index.html 404.html; do
+          npx -y html-minifier-terser@7.2.0 \
+            --collapse-whitespace --remove-comments \
+            "$page" -o "$page.min"
+          mv "$page.min" "$page"
+        done
 
     # Deploy per SSH/rsync: eine Verbindung, nur Geändertes, komprimiert. Sicherheitsnetz: ohne
     # Variable DEPLOY_RSYNC_LIVE=true im Environment nur ein Probelauf (--dry-run), der zeigt, was

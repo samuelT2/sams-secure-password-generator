@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- "Not found" page, served by "ErrorDocument 404 /404.html" (.htaccess) with status 404.
+     Bilingual (EN/DE), because a static page cannot know the visitor's language.
+     Absolute paths only: this page is shown under any unknown URL. -->
+
+<head>
+  <meta charset="UTF-8">
+  <title>404 - Page not found · Sam's Secure Password Generator (SSPG)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; manifest-src 'self'; connect-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/css/style.css?v=1.4.0">
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-icon-180x180.png">
+  <meta name="theme-color" content="#f1f5f9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+</head>
+
+<body>
+  <main class="app">
+    <header class="app-header">
+      <p class="intro">404</p>
+      <h1>Sam's Secure Password Generator (SSPG)</h1>
+    </header>
+
+    <section class="card not-found">
+      <h2>Page not found</h2>
+      <p>This page does not exist (anymore).</p>
+      <p><a class="btn btn--primary" href="/">Go to the password generator</a></p>
+    </section>
+
+    <section class="card not-found" lang="de-CH">
+      <h2>Seite nicht gefunden</h2>
+      <p>Diese Seite gibt es nicht (mehr).</p>
+      <p><a class="btn btn--primary" href="/de/">Zum Passwort-Generator</a></p>
+    </section>
+  </main>
+</body>
+
+</html>

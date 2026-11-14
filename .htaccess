@@ -1,9 +1,14 @@
+# Own "not found" page (static, carries noindex itself; Apache keeps status 404)
+ErrorDocument 404 /404.html
+
 <IfModule mod_headers.c>
   Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
   Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; manifest-src 'self'; connect-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; frame-ancestors 'none'"
   Header always set X-Content-Type-Options "nosniff"
   Header always set X-Frame-Options "DENY"
   Header always set Referrer-Policy "no-referrer"
+  # "/" depends on Accept-Language (comfort redirect below) - caches must keep the variants apart.
+  Header always merge Vary "Accept-Language" "expr=%{REQUEST_URI} =~ m#^/(index\.html)?$#"
 </IfModule>
 
 <IfModule mod_rewrite.c>
@@ -13,4 +18,12 @@
   RewriteCond %{HTTP_HOST} ^www\. [NC]
   RewriteCond %{HTTP_HOST} ^(?:www\.)?(.+)$ [NC]
   RewriteRule ^ https://%1%{REQUEST_URI} [QSA,R=301,L]
+
+  # Language versions: "/" = English (x-default), "/de/" = German.
+  # Comfort for humans only: browsers whose preferred language is German are sent from "/" to
+  # "/de/" - temporarily (302), so "/" stays the English canonical URL. Crawlers send no
+  # Accept-Language and stay on English. "?lang=en" (language switcher) skips the redirect.
+  RewriteCond %{QUERY_STRING} !(^|&)lang=en(&|$) [NC]
+  RewriteCond %{HTTP:Accept-Language} ^de [NC]
+  RewriteRule ^$ /de/ [R=302,L]
 </IfModule>

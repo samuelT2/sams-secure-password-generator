@@ -11,6 +11,27 @@
   const MAX_SYMBOLS = 100;
   const PASSWORD_COUNT = 3;
 
+  // UI texts created in JS. The language comes from <html lang> ("en" on /,
+  // "de-CH" on /de/), so both page versions share this one script.
+  const MESSAGES = {
+    en: {
+      symbolsRequired: "Please enter at least one symbol when 'Include symbols' is checked.",
+      typeRequired: 'Please select at least one character type.',
+      copied: '✔ Copied!',
+      copiedAnnounce: 'Password copied to clipboard.',
+      copyFailed: 'Could not copy to clipboard.',
+    },
+    de: {
+      symbolsRequired: 'Bitte mindestens ein Sonderzeichen eingeben, wenn «Sonderzeichen verwenden» aktiviert ist.',
+      typeRequired: 'Bitte mindestens eine Zeichenart auswählen.',
+      copied: '✔ Kopiert!',
+      copiedAnnounce: 'Passwort in die Zwischenablage kopiert.',
+      copyFailed: 'Kopieren in die Zwischenablage fehlgeschlagen.',
+    },
+  };
+  const LANG = (document.documentElement.lang || 'en').toLowerCase().split('-')[0];
+  const T = MESSAGES[LANG] || MESSAGES.en;
+
   // Cached references to status regions (assigned on init).
   let formError = null;
   let copyStatus = null;
@@ -100,7 +121,7 @@
       const inputField = document.getElementById('customSymbols');
 
       if (inputField.value.trim().length === 0) {
-        showError("Please enter at least one symbol when 'Include symbols' is checked.");
+        showError(T.symbolsRequired);
         return;
       }
 
@@ -110,7 +131,7 @@
     }
 
     if (charPool.length === 0) {
-      showError('Please select at least one character type.');
+      showError(T.typeRequired);
       return;
     }
 
@@ -159,12 +180,12 @@
     if (!badge) {
       badge = document.createElement('span');
       badge.className = 'copy-feedback';
-      badge.textContent = '✔ Copied!';
+      badge.textContent = T.copied;
       button.insertAdjacentElement('afterend', badge);
     }
     clearTimeout(badge.dataset.timer);
     badge.dataset.timer = setTimeout(() => badge.remove(), 2000);
-    announce('Password copied to clipboard.');
+    announce(T.copiedAnnounce);
   }
 
   function copyToClipboard(id) {
@@ -175,7 +196,7 @@
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(input.value)
         .then(() => showCopyFeedback(button))
-        .catch(() => announce('Could not copy to clipboard.'));
+        .catch(() => announce(T.copyFailed));
       return;
     }
 
@@ -185,7 +206,7 @@
     if (document.execCommand('copy')) {
       showCopyFeedback(button);
     } else {
-      announce('Could not copy to clipboard.');
+      announce(T.copyFailed);
     }
     window.getSelection()?.removeAllRanges();
   }
