@@ -57,6 +57,11 @@ Ideas or bugs? [Submit an issue](https://github.com/samuelT2/sams-secure-passwor
 - Bump `CACHE_NAME` together with the `?v=` query strings in
   [`index.html`](index.html), [`de/index.html`](de/index.html) and [`404.html`](404.html)
   whenever assets change, so clients pick up updates.
+- Icons: [`favicon.ico`](favicon.ico) (16/32/48 px) in the root, plus in
+  [`assets/favicon/`](assets/favicon/) `favicon-96x96.png`, `apple-icon-180x180.png` and the
+  manifest icons `android-icon-192x192.png` / `android-icon-512x512.png` (also precached by the
+  service worker). `app.png` and `app_dark.png` are the manifest screenshots - keep their
+  `sizes` in [`manifest.json`](assets/pwa/manifest.json) in sync with the real image size.
 
 ## Local development
 

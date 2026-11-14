@@ -1,13 +1,13 @@
-const CACHE_NAME = 'sspg-v1.4.0';
+const CACHE_NAME = 'sspg-v1.4.1';
 // The pages are cached by file name, not as "/" and "/de/": "/" may answer with
 // a redirect to /de/ (.htaccess, German browsers), and a redirected response
 // must not be served for a navigation. Navigations are mapped in PAGE_FOR.
 const CACHE_FILES = [
   '/index.html',
   '/de/index.html',
-  '/css/style.css?v=1.4.0',
-  '/js/sspg.js?v=1.4.0',
-  '/register-sw.js?v=1.4.0',
+  '/css/style.css?v=1.4.1',
+  '/js/sspg.js?v=1.4.1',
+  '/register-sw.js?v=1.4.1',
   '/assets/pwa/manifest.json',
   '/assets/favicon/android-icon-192x192.png',
   '/assets/favicon/android-icon-512x512.png',
