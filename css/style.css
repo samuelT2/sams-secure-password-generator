@@ -82,31 +82,51 @@ body {
   margin-bottom: 1.5rem;
 }
 
-/* Language switcher (EN | DE) */
+/* Language switcher (EN | DE)
+   Each link is a 44x44 px tap target; the visible pill (::before) stays small.
+   The negative top margin offsets the taller links, so the layout does not move. */
 .lang-switch {
   display: flex;
   justify-content: flex-end;
   gap: 0.25rem;
-  margin-bottom: 0.5rem;
+  margin: -0.5rem 0 0;
   font-size: 0.9rem;
 }
 
 .lang-switch a {
-  padding: 0.15rem 0.55rem;
-  border: 1px solid transparent;
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 0.6rem;
   border-radius: var(--radius-sm);
   color: var(--muted);
   font-weight: 600;
   text-decoration: none;
 }
 
-.lang-switch a:hover {
+.lang-switch a::before {
+  content: "";
+  position: absolute;
+  inset: 0.5rem 0;
+  z-index: -1;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+}
+
+.lang-switch a:hover,
+.lang-switch a[aria-current="page"] {
   color: var(--text);
+}
+
+.lang-switch a:hover::before {
   border-color: var(--border-strong);
 }
 
-.lang-switch a[aria-current="page"] {
-  color: var(--text);
+.lang-switch a[aria-current="page"]::before {
   background: var(--surface);
   border-color: var(--border);
 }
