@@ -27,3 +27,60 @@ ErrorDocument 404 /404.html
   RewriteCond %{HTTP:Accept-Language} ^de [NC]
   RewriteRule ^$ /de/ [R=302,L]
 </IfModule>
+
+# ---------------------------------------------------------------------------
+# Caching
+# CSS and JS are always referenced with "?v=<version>" (index.html, de/index.html, 404.html and
+# CACHE_FILES in sw.js) - cache them for a year and bump the version whenever they change.
+# Sections are applied in order; for sw.js the later block wins (its URL has no version, and
+# the browser must see a new service worker right away).
+# ---------------------------------------------------------------------------
+<IfModule mod_headers.c>
+  <FilesMatch "\.(css|js)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  # Icons, screenshots and the social preview have no version - 30 days
+  <FilesMatch "\.(png|jpe?g|webp|gif|svg|ico)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+  # Pages, sitemap, robots: always revalidate, so a deploy is visible at once
+  <FilesMatch "\.(html|xml|txt)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+  <Files "sw.js">
+    Header set Cache-Control "no-cache"
+    Header unset Expires
+  </Files>
+  # Manifest (no version): short, so icon changes reach installed apps soon
+  <Files "manifest.json">
+    Header set Cache-Control "public, max-age=3600"
+  </Files>
+</IfModule>
+
+# Expires fallback for clients/proxies without Cache-Control
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/html "access plus 0 seconds"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType text/javascript "access plus 1 year"
+  ExpiresByType application/json "access plus 1 hour"
+  ExpiresByType application/manifest+json "access plus 1 hour"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/webp "access plus 30 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType image/x-icon "access plus 30 days"
+  ExpiresByType image/vnd.microsoft.icon "access plus 30 days"
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# Compression (adds "Vary: Accept-Encoding"; the Accept-Language Vary above stays)
+# ---------------------------------------------------------------------------
+<IfModule mod_deflate.c>
+  <IfModule mod_filter.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml application/xml \
+      application/javascript text/javascript application/json application/manifest+json \
+      image/svg+xml image/x-icon image/vnd.microsoft.icon
+  </IfModule>
+</IfModule>
