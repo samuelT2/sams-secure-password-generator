@@ -30,9 +30,16 @@ concurrency:
 #      rot. Im Log die Zeilen "*deleting" prüfen (erwartet: Altlasten wie .ftp-deploy-sync-state.json),
 #      dann im Environment DEPLOY_RSYNC_LIVE = true setzen und erneut starten.
 #   Das alte Secret FTP_USER wird danach nicht mehr gebraucht.
+#
+# TESTS (2026-11): deployt wird nur nach grünen Tests (tests.yml: gleicher Build wie hier, Seiten und verlinkte
+# Dateien über einen lokalen Server). Build und Smoke-Test liegen in .github/deploy/build.sh und smoke.sh.
 jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+
   web-deploy:
     name: Deploy
+    needs: tests
     # PROD nur von main - auch wenn der Workflow manuell auf einem anderen Branch gestartet wird.
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -66,27 +73,9 @@ jobs:
       with:
         node-version: 20
 
-    - name: Minify HTML, CSS and JS
-      # Minifies in place inside the runner only; the committed source files
-      # stay readable. Tool versions are pinned for reproducible builds.
-      run: |
-        set -euo pipefail
-        minify_js() {
-          npx -y terser@5.48.0 "$1" -c -m -o "$1.min"
-          mv "$1.min" "$1"
-        }
-        minify_js js/sspg.js
-        minify_js register-sw.js
-        minify_js sw.js
-        npx -y clean-css-cli@5.6.3 css/style.css -o css/style.css.min
-        mv css/style.css.min css/style.css
-        # Alle HTML-Seiten (inkl. deutscher Fassung de/ und 404-Seite) - entfernt auch die Kommentare.
-        for page in index.html de/index.html 404.html; do
-          npx -y html-minifier-terser@7.2.0 \
-            --collapse-whitespace --remove-comments \
-            "$page" -o "$page.min"
-          mv "$page.min" "$page"
-        done
+    # Minifizieren usw. (gleiches Skript wie in tests.yml)
+    - name: Build
+      run: bash .github/deploy/build.sh
 
     # Deploy per SSH/rsync: eine Verbindung, nur Geändertes, komprimiert. Sicherheitsnetz: ohne
     # Variable DEPLOY_RSYNC_LIVE=true im Environment nur ein Probelauf (--dry-run), der zeigt, was
@@ -132,8 +121,7 @@ jobs:
           exit 1
         fi
 
+    # alle Seiten der Sitemap, verlinkte Dateien und 404 auf PROD (gleiches Skript wie in tests.yml)
     - name: Smoke-Test
       timeout-minutes: 5
-      run: |
-        curl --fail --silent --show-error --retry 3 --retry-delay 5 --connect-timeout 10 --max-time 20 \
-          -o /dev/null https://sspg.ch/
+      run: bash .github/deploy/smoke.sh https://sspg.ch

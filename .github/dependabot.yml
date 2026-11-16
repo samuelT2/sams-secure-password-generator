@@ -8,4 +8,11 @@ updates:
     directory: "/"
     schedule:
       # Check for updates to GitHub Actions every week
-      interval: "weekly"
+      interval: "weekly"    # DEPENDABOT (2026-11): neue Versionen erst nach 7 Tagen (kompromittierte Releases sind dann meist
+    # zurückgezogen), alle Minor-/Patch-Updates in einem Pull Request (automatisch gemerged,
+    # dependabot-auto-merge.yml)
+    cooldown:
+      default-days: 7
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]

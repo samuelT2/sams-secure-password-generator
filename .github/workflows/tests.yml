@@ -1,0 +1,43 @@
+name: tests
+
+# TESTS (2026-11): prüft vor jedem Deploy, dass der Build funktioniert und die gebaute Website vollständig ist.
+# - Gleiche Actions und gleiches Build-Skript wie prod-deploy.yml: ein kaputtes Update einer Action (Dependabot)
+#   oder eines Werkzeugs fällt hier auf statt beim Deploy.
+# - dann läuft die gebaute Website auf einem lokalen Server.
+#   .github/deploy/smoke.sh prüft jede Seite der Sitemap (HTTP 200, vollständig, ohne PHP-Fehler), jede lokal
+#   verlinkte Datei, robots.txt und die 404-Seite.
+# Läuft bei Pull Requests (auch denen von Dependabot, dependabot-auto-merge.yml wartet darauf) und vor jedem
+# PROD-Deploy (prod-deploy.yml, needs: tests).
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  website:
+    name: Build + Smoke-Test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get latest code
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+    - name: Setup Node
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: 20
+
+    - name: Build
+      run: bash .github/deploy/build.sh
+
+    - name: Shell-Skripte (shellcheck)
+      run: shellcheck --severity=style .github/deploy/*.sh
+
+    - name: Smoke-Test (lokaler Server)
+      run: |
+        python3 -m http.server 8080 --bind 127.0.0.1 >/dev/null 2>&1 &
+        for _ in $(seq 1 20); do curl -fs -o /dev/null http://127.0.0.1:8080/ && break; sleep 0.5; done
+        bash .github/deploy/smoke.sh http://127.0.0.1:8080
