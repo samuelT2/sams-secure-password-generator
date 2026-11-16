@@ -20,15 +20,17 @@
  * eine Site dauerhaft besser wird.
  */
 // "/" ist Englisch (x-default). Achtung: .htaccess leitet Browser mit deutscher Accept-Language von "/" auf "/de/"
-// um. Der Runner (ubuntu-latest) schickt en-US; lokal mit deutschem Edge/Chrome zusätzlich
-// --collect.settings.chromeFlags="--headless=new --accept-lang=en-US" angeben, sonst wird "/" zweimal als /de/ gemessen.
+// um. Deshalb geht unten Accept-Language en-US fest mit (auch lokal mit deutschem Edge/Chrome).
 const PATHS = ['/', '/de/'];
 
 const THRESHOLDS = {
   // Scores 0–1, Messwerte in ms (CLS ohne Einheit). Kein TEST-Host: nur prod (Live-Domain nach dem Deploy) und local
   // (gebaute Site im Runner vor dem Deploy, ohne gzip/Cache-Header des Hosters).
-  prod: { performance: 0.85, accessibility: 0.95, 'best-practices': 0.95, seo: 0.95, lcp: 3000, cls: 0.1, tbt: 400 },
-  local: { performance: 0.7, accessibility: 0.9, 'best-practices': 0.8, seo: 0.8, lcp: 4500, cls: 0.1, tbt: 600 },
+  // Kalibriert 16.11.2026 auf Lauf 43959953761 (GitHub Actions, Median je URL, "/" = Englisch, /de/ = Deutsch):
+  // prod: alle Scores 100, LCP 0.86 s, CLS 0, TBT ≤ 9 ms; local: alle Scores 100, LCP 0.93 s, CLS 0, TBT 0 ms
+  // (Ausreisser einzelner Läufe: LCP 1.13 s, TBT 87 ms).
+  prod: { performance: 0.95, accessibility: 0.95, 'best-practices': 0.95, seo: 0.95, lcp: 1200, cls: 0.1, tbt: 300 },
+  local: { performance: 0.95, accessibility: 0.95, 'best-practices': 0.95, seo: 0.95, lcp: 1200, cls: 0.1, tbt: 300 },
 };
 
 const base = (process.env.LH_URL || '').replace(/\/+$/, '');
@@ -45,7 +47,11 @@ module.exports = {
       numberOfRuns: 3,
       settings: {
         onlyCategories: ['performance', 'accessibility', 'best-practices', 'seo'],
-        ...(auth ? { extraHeaders: JSON.stringify({ Authorization: 'Basic ' + Buffer.from(auth).toString('base64') }) } : {}),
+        // Standardsprache Englisch mitschicken, damit "/" nie per Komfort-Umleitung auf /de/ landet
+        extraHeaders: JSON.stringify({
+          'Accept-Language': 'en-US,en;q=0.9',
+          ...(auth ? { Authorization: 'Basic ' + Buffer.from(auth).toString('base64') } : {}),
+        }),
       },
     },
     assert: {
