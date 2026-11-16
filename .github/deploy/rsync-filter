@@ -21,3 +21,7 @@
 - .claude/
 - node_modules/
 - /README.md
+# Performance-Gate (Lighthouse CI): Konfiguration, Zusammenfassung und Berichte
+- /lighthouserc.cjs
+- /scripts/
+- .lighthouseci/

@@ -33,13 +33,56 @@ concurrency:
 #
 # TESTS (2026-11): deployt wird nur nach grünen Tests (tests.yml: gleicher Build wie hier, Seiten und verlinkte
 # Dateien über einen lokalen Server). Build und Smoke-Test liegen in .github/deploy/build.sh und smoke.sh.
+#
+# PERFORMANCE (2026-11): Lighthouse CI (Mobil, 3 Läufe, Median) wie pagespeed.web.dev, Schwellen in lighthouserc.cjs.
+# Es gibt keinen TEST-Host: vor dem Deploy wird die gebaute Site im Runner gemessen (Profil local), nach dem Deploy
+# die Live-Domain (Profil prod; rot = Lauf rot, kein Rollback). Tabelle in der Zusammenfassung des Laufs, Berichte
+# in den Artefakten "lighthouse-local" und "lighthouse" (PROD). Eigene Jobs, damit .lighthouseci/ nie im Checkout
+# des Deploys landet.
 jobs:
   tests:
     uses: ./.github/workflows/tests.yml
 
+  lighthouse-local:
+    name: Lighthouse (gebaute Site im Runner)
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get latest code
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+    - name: Setup Node
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: 20
+
+    # gemessen wird, was deployt würde (minifiziert)
+    - name: Build
+      run: bash .github/deploy/build.sh
+
+    - name: Lighthouse
+      env:
+        LH_URL: http://127.0.0.1:8080
+        LH_PROFILE: local
+      run: |
+        python3 -m http.server 8080 --bind 127.0.0.1 >/dev/null 2>&1 &
+        for _ in $(seq 1 20); do curl -fs -o /dev/null http://127.0.0.1:8080/ && break; sleep 0.5; done
+        npx --yes @lhci/cli@0.15.1 autorun --config=lighthouserc.cjs
+
+    - name: Lighthouse-Zusammenfassung
+      if: always()
+      run: node scripts/lighthouse-summary.cjs >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Lighthouse-Berichte
+      if: always()
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: lighthouse-local
+        path: .lighthouseci/reports/
+        retention-days: 14
+
   web-deploy:
     name: Deploy
-    needs: tests
+    needs: [tests, lighthouse-local]
     # PROD nur von main - auch wenn der Workflow manuell auf einem anderen Branch gestartet wird.
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -125,3 +168,34 @@ jobs:
     - name: Smoke-Test
       timeout-minutes: 5
       run: bash .github/deploy/smoke.sh https://sspg.ch
+
+  lighthouse-prod:
+    name: Lighthouse (PROD)
+    needs: web-deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get latest code
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+    - name: Setup Node
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: 20
+
+    - name: Lighthouse
+      env:
+        LH_URL: https://sspg.ch
+        LH_PROFILE: prod
+      run: npx --yes @lhci/cli@0.15.1 autorun --config=lighthouserc.cjs
+
+    - name: Lighthouse-Zusammenfassung
+      if: always()
+      run: node scripts/lighthouse-summary.cjs >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Lighthouse-Berichte
+      if: always()
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: lighthouse
+        path: .lighthouseci/reports/
+        retention-days: 14
