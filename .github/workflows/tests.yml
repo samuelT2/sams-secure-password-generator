@@ -8,6 +8,8 @@ name: tests
 #   verlinkte Datei, robots.txt und die 404-Seite.
 # Läuft bei Pull Requests (auch denen von Dependabot, dependabot-auto-merge.yml wartet darauf) und vor jedem
 # PROD-Deploy (prod-deploy.yml, needs: tests).
+# ENFORCE (2026-11): Repository-Variable ENFORCE_DEPLOYMENT=true überspringt die Tests, auch bei Pull Requests
+# (Schnell-Deploy, siehe prod-deploy.yml). Danach Variable löschen, sonst wird nichts getestet.
 on:
   pull_request:
     branches: [ main ]
@@ -20,6 +22,7 @@ permissions:
 jobs:
   website:
     name: Build + Smoke-Test
+    if: vars.ENFORCE_DEPLOYMENT != 'true'
     runs-on: ubuntu-latest
     steps:
     - name: Get latest code

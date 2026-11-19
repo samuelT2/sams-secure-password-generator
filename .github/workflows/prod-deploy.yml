@@ -39,12 +39,17 @@ concurrency:
 # die Live-Domain (Profil prod; rot = Lauf rot, kein Rollback). Tabelle in der Zusammenfassung des Laufs, Berichte
 # in den Artefakten "lighthouse-local" und "lighthouse" (PROD). Eigene Jobs, damit .lighthouseci/ nie im Checkout
 # des Deploys landet.
+#
+# ENFORCE (2026-11): Repository-Variable ENFORCE_DEPLOYMENT=true = Schnell-Deploy (z. B. ohne Actions-Minuten): nur
+# Build, rsync und Smoke-Test; tests und Lighthouse (vor und nach dem Deploy) fallen weg. Danach Variable löschen.
 jobs:
   tests:
+    if: vars.ENFORCE_DEPLOYMENT != 'true'
     uses: ./.github/workflows/tests.yml
 
   lighthouse-local:
     name: Lighthouse (gebaute Site im Runner)
+    if: vars.ENFORCE_DEPLOYMENT != 'true'
     runs-on: ubuntu-latest
     steps:
     - name: Get latest code
@@ -84,12 +89,22 @@ jobs:
     name: Deploy
     needs: [tests, lighthouse-local]
     # PROD nur von main - auch wenn der Workflow manuell auf einem anderen Branch gestartet wird.
-    if: github.ref == 'refs/heads/main'
+    # tests und lighthouse-local dürfen übersprungen sein (ENFORCE_DEPLOYMENT), aber nicht fehlgeschlagen oder abgebrochen.
+    if: >-
+      ${{ !cancelled() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+      && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     environment:
       name: production
       url: https://sspg.ch
     steps:
+    - name: Schnell-Deploy (ENFORCE_DEPLOYMENT)
+      if: vars.ENFORCE_DEPLOYMENT == 'true'
+      run: |
+        msg="ENFORCE_DEPLOYMENT=true: nur Deploy - Tests und Lighthouse übersprungen. Variable nach dem Deploy wieder löschen."
+        echo "::warning::$msg"
+        echo "### $msg" >> "$GITHUB_STEP_SUMMARY"
+
     - name: PROD-Zugang (SSH) vorhanden?
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -172,6 +187,7 @@ jobs:
   lighthouse-prod:
     name: Lighthouse (PROD)
     needs: web-deploy
+    if: vars.ENFORCE_DEPLOYMENT != 'true'
     runs-on: ubuntu-latest
     steps:
     - name: Get latest code

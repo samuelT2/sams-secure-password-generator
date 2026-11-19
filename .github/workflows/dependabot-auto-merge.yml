@@ -7,6 +7,7 @@ name: Dependabot auto-merge
 #   getestete Commit noch der Head ist und jedes Update semver-patch/-minor ist (Metadaten in der Commit-Message).
 # - Ein Merge mit dem GITHUB_TOKEN löst keine Push-Workflows aus, darum wird der Deploy ausdrücklich gestartet.
 # Cooldown (7 Tage) und Gruppierung der Minor-/Patch-Updates: .github/dependabot.yml.
+# ENFORCE (2026-11): Mit ENFORCE_DEPLOYMENT=true fallen die Tests weg und der Lauf ist trotzdem grün - dann kein Auto-Merge.
 on:
   workflow_run:
     workflows: ["tests"]
@@ -20,6 +21,7 @@ jobs:
     name: Merge minor/patch updates
     if: >-
       github.event.workflow_run.event == 'pull_request' &&
+      vars.ENFORCE_DEPLOYMENT != 'true' &&
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.actor.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
